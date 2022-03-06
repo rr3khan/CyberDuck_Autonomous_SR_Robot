@@ -5,6 +5,12 @@
 #include <AFMotor.h> // Library for Adafruit motor shield  
 #include <NewPing.h> // Library for the Ultrasonic sensor
 
+// Libraries for the IMU
+
+#include <Adafruit_ICM20X.h>
+#include <Adafruit_ICM20948.h>
+#include <Adafruit_Sensor.h>
+
 // Setup Pins for UltraSonic Sensors
 
 // To do determine which pins these are on the board
@@ -34,6 +40,9 @@ AF_DCMotor motorFR(2, MOTOR12_1KHZ); // FR = Front Right motor
 AF_DCMotor motorFL(3, MOTOR34_1KHZ);
 AF_DCMotor motorBL(4, MOTOR34_1KHZ);
 
+// IMU Sensor Definition
+Adafruit_ICM20948 imu;
+
 // Helper functions
 
 void turnRight() {
@@ -56,6 +65,19 @@ void moveForward() {
 
 void setup() {
   // put your setup code here, to run once:
+
+  Serial.begin(9600); // opens serial port, sets data rate to 9600 bps
+
+  // setup IMU
+  if (imu.begin_I2C()) {
+    Serial.println("IMU Found!");
+  }
+  else {
+    Serial.println("IMU not found.");
+  }
+
+  imu.setAccelRange(ICM20948_ACCEL_RANGE_8_G); // 8 G force
+  imu.setGyroRange(ICM20948_GYRO_RANGE_1000_DPS); // 1000 degrees/s
 
 }
 
