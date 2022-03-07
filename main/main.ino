@@ -50,6 +50,12 @@ void turnRight() {
   motorFR.run(BACKWARD);
   motorBL.run(FORWARD);
   motorFL.run(FORWARD);
+  delay(500);
+
+  motorBR.run(FORWARD);
+  motorFR.run(FORWARD);
+  motorBL.run(FORWARD);
+  motorFL.run(FORWARD);
 }
 
 void moveForward() {
@@ -57,6 +63,17 @@ void moveForward() {
   motorFR.run(FORWARD);
   motorBL.run(FORWARD);
   motorFL.run(FORWARD);
+
+  delay(500);
+}
+
+void stopMoving() {
+  motorBR.run(RELEASE);
+  motorFR.run(RELEASE);
+  motorBL.run(RELEASE);
+  motorFL.run(RELEASE);
+
+  delay(500);
 }
 
 // Reading values from the UltraSonic sensor
@@ -66,7 +83,22 @@ void moveForward() {
 void setup() {
   // put your setup code here, to run once:
 
+  // motor setup start slow, will change speed in testing
+  motorBR.setSpeed(50);
+  motorFR.setSpeed(50);
+  motorBL.setSpeed(50);
+  motorFL.setSpeed(50);
+
+  // get initial readings from ultrasonic sensors
+  // to do convert these pings to estimated distance in tiles
+  delay(100);
+  int F = sonarF.ping_cm();
+  int L = sonarL.ping_cm();
+  int R = sonarR.ping_cm();
+
   Serial.begin(9600); // opens serial port, sets data rate to 9600 bps
+
+  // setup motors
 
   // setup IMU
   if (imu.begin_I2C()) {
