@@ -94,11 +94,11 @@ void moveForward() {
   motorFL.run(FORWARD);
 }
 
-float getYaw(){ 
-  // need to test first and see if the function works
-  // back-up idea: using magnetometer to find yaw?
-  return 0; 
-}
+//float getYaw(){ 
+//  // need to test first and see if the function works
+//  // back-up idea: using magnetometer to find yaw?
+//  return 0; 
+//}
 
 float getFrontDist() { // in cm
   delay(50); 
@@ -180,6 +180,17 @@ void turnRight90() {
   turnToAngle((angle + 90) % 360);
 }
 
+// testing functions
+
+// test 1 Average speed test
+void speedTest(int stoppingDistance){
+   if (getFrontDist()> stoppingDistance){
+    moveForward();
+    }
+    else {
+      stopMotors();
+      }
+  }
 
 void setup() {
   // put your setup code here, to run once:
@@ -200,6 +211,21 @@ void setup() {
 
 void loop() {
   // put your main code here, to run repeatedly:
-  
+
+  // testing turn each motors slowly for 5 s
+
+  motorBR.setSpeed(MOTOR_SPEED_TURNING);
+  motorFR.setSpeed(MOTOR_SPEED_TURNING);
+  motorBL.setSpeed(MOTOR_SPEED_TURNING);
+  motorFL.setSpeed(MOTOR_SPEED_TURNING);
+
+  motorBR.run(FORWARD);
+  delay(5000);
+  motorFR.run(FORWARD);
+  delay(5000);
+  motorBL.run(FORWARD);
+  delay(5000);
+  motorFL.run(FORWARD);
+  delay(5000);
 
 }
