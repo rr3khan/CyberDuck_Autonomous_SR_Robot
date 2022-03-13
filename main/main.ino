@@ -7,6 +7,7 @@
 #include <Adafruit_ICM20X.h> // Libraries for the IMU
 #include <Adafruit_ICM20948.h> // Libraries for the IMU
 #include <Adafruit_Sensor.h> // Libraries for the IMU
+#include <Wire.h> // Libraries for the IMU
 
 // UltraSonic Sensors
 // Setup Pins for UltraSonic Sensors
@@ -122,7 +123,7 @@ void turnToAngle(int ang) { // angle should be in [0, 360) degree
   if (angdiff < 180) {
     turnRight();
   } else {
-    turnLeft();
+    turnLeft(); // would we ever need to turn left?
   }
 
   // stop when the yaw gets close to the target angle (margin)
@@ -192,6 +193,29 @@ void speedTest(int stoppingDistance){
       }
   }
 
+// test 2 Turn test
+void turnTest(int turnAngle){
+  delay(100);
+  turnToAngle(turnAngle);
+  delay(100);
+  }
+
+// test 3 Detection and Reaction test
+void detectAndReactTest(int reactionDistance, int test3Time){
+   if (getFrontDist()<= reactionDistance){
+    Serial.println("Front Detected Turning");
+    turnRight();
+    delay(test3Time);
+    }
+    else if (getLeftDist()<= reactionDistance) {
+      Serial.println("Left Detected Turning");
+      delay(test3Time);
+      }
+      else {
+        stopMotors();
+        }
+  }
+
 void setup() {
   // put your setup code here, to run once:
   Serial.begin(115200); // opens serial port and sets data rate to 115200 bps
@@ -227,5 +251,15 @@ void loop() {
   delay(5000);
   motorFL.run(FORWARD);
   delay(5000);
+
+  // March 25th design check testing
+  
+  speedTest(5); // stop 5 cm infront of obtruction at end of path
+
+  turnTest(85); // turn to 85 degrees, assuming there is delay in wheels which would get us to 90
+
+  detectAndReactTest(5, 1000); // detect hand/object at least 5 cm away and wait at least 1 s between detections
+
+  
 
 }
