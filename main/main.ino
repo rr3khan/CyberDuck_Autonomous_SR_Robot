@@ -1,7 +1,6 @@
 // Obstacle Course Robot code
 
 // Required Libraries
-
 #include <AFMotor.h> // Library for Adafruit motor shield  
 #include <NewPing.h> // Library for the Ultrasonic sensor
 #include <Adafruit_ICM20X.h> // Libraries for the IMU
@@ -21,7 +20,7 @@
 // Maximum distance we want to ping for (in centimeters)
 #define MAX_DISTANCE 300 // To Do determine the max distance we need to work with
 
-// Setup each of the UltraSonic senssors
+// Setup each of the UltraSonic sensors
 NewPing sonarF(TRIGGER_PIN_F, ECHO_PIN_F, MAX_DISTANCE);
 NewPing sonarL(TRIGGER_PIN_L, ECHO_PIN_L, MAX_DISTANCE);
 // NewPing sonarR(TRIGGER_PIN_R, ECHO_PIN_R, MAX_DISTANCE); // maybe not used ?!
@@ -82,33 +81,83 @@ void turnLeft() {
 }
 
 void moveForward() {
-  // set motor speed
-  motorBR.setSpeed(MOTOR_SPEED_FORWARD);
-  motorFR.setSpeed(MOTOR_SPEED_FORWARD);
-  motorBL.setSpeed(MOTOR_SPEED_FORWARD);
-  motorFL.setSpeed(MOTOR_SPEED_FORWARD);
+// set motor speed
+//  motorBR.setSpeed(MOTOR_SPEED_FORWARD);
+//  motorFR.setSpeed(MOTOR_SPEED_FORWARD);
+//  motorBL.setSpeed(MOTOR_SPEED_FORWARD);
+//  motorFL.setSpeed(MOTOR_SPEED_FORWARD);
 
   // moving forward
   motorBR.run(FORWARD);
   motorFR.run(FORWARD);
   motorBL.run(FORWARD);
   motorFL.run(FORWARD);
+
+  for (int speedSet = 0; speedSet < MOTOR_SPEED_FORWARD; speedSet +=2) // slowly bring the speed up 
+                                                          // to reduce stress on motors and battery
+  {
+   motorBR.setSpeed(speedSet);
+   motorFR.setSpeed(speedSet);
+   motorBL.setSpeed(speedSet);
+   motorFL.setSpeed(speedSet);
+   delay(5);
+  }
 }
 
-//float getYaw(){ 
-//  // need to test first and see if the function works
-//  // back-up idea: using magnetometer to find yaw?
-//  return 0; 
-//}
+float getYaw(){ 
+    // Source:
+    // https://students.iitk.ac.in/roboclub/2017/12/21/Beginners-Guide-to-IMU.html
+    sensors_event_t accel;
+    sensors_event_t gyro;
+    sensors_event_t mag;
+    sensors_event_t temp;
+    imu.getEvent(&accel, &gyro, &temp, &mag);
 
+    float accelX = accel.acceleration.x;
+    float accelY = accel.acceleration.y;
+    float accelZ = accel.acceleration.z;
+
+    float magReadX = mag.magnetic.x;
+    float magReadY = mag.magnetic.y;
+    float magReadZ = mag.magnetic.z;
+
+    // unit changed to in radian
+    float pitch = atan2(accelX, sqrt(accelY*accelY + accelZ*accelZ));
+    float roll = atan2(accelY, sqrt(accelX*accelX + accelZ*accelZ));
+
+    float mag_x = magReadX*cos(pitch) + magReadY*sin(roll)*sin(pitch) + magReadZ*cos(roll)*sin(pitch);
+    float mag_y = magReadY * cos(roll) - magReadZ * sin(roll);
+    float yaw = 180 * atan2(-mag_y,mag_x)/M_PI;
+
+    return yaw; 
+}
+
+float front_dist_arr[] = {999,999,999,999,999,999,999,999,999,999}; // Large value place holders
+int front_i = 0;
 float getFrontDist() { // in cm
-  delay(50); 
-  return sonarF.ping_cm(); 
+// use running average to ensure stability
+  delay(50);
+  front_dist_arr[++front_i] = sonarF.ping_cm();
+
+  float total = 0;
+  for (int j=0; j<10; ++j) {
+      total += front_dist_arr[j];
+  }
+  return  total / 10;
 }
 
+float left_dist_arr[] = {999,999,999,999,999,999,999,999,999,999}; // Large value place holders
+int left_i = 0;
 float getLeftDist() { // in cm
+// use running average to ensure stability
   delay(50); 
-  return sonarL.ping_cm();
+  left_dist_arr[++left_i] = sonarF.ping_cm();
+
+  float total = 0;
+  for (int j=0; j<10; ++j) {
+      total += left_dist_arr[j];
+  }
+  return  total / 10;
 }
 
 void turnToAngle(int ang) { // angle should be in [0, 360) degree
@@ -123,12 +172,17 @@ void turnToAngle(int ang) { // angle should be in [0, 360) degree
   if (angdiff < 180) {
     turnRight();
   } else {
-    turnLeft(); // would we ever need to turn left? , possibly to correct straightness position
+    turnLeft();
   }
 
   // stop when the yaw gets close to the target angle (margin)
   while (abs(getYaw() - ang) > angleMargin && abs(getYaw() - ang) < 360 - angleMargin) {}
   stopMotors();
+}
+
+void turnRight90() {
+  float angle = getYaw(); // this angle is the "straight", recorded at the start
+  turnToAngle((int(angle) + 90) % 360); //turnToAngle((int(initialAngle) + 90) % 360) // turn right is +90
 }
 
 void moveForwardUntil(float minFrontDist) { // case 1: moving straight forward does not need left 
@@ -145,23 +199,23 @@ void moveForwardUntil(float minFrontDist) { // case 1: moving straight forward d
 }
 
 void moveForwardUntil(float minFrontDist, float leftDist) { // case 2: moving straight forward needs left
-  int angleMargin = 10; // degree, To Do: determine the margin
-  int distMargin = 5; // left dist, To Do: determine the margin
-  int angleTurnAdjust = 15; // deg, To Do: determine the angle
-  int blindDuration = 3000; // ms, To Do: determine the duration
-  int angle = getYaw(); // this angle is the "straight", recorded at each start after turning 90 deg 
+  float angleMargin = 10; // degree, To Do: determine the margin
+  float distMargin = 5; // left dist, To Do: determine the margin
+  float angleTurnAdjust = 15; // deg, To Do: determine the angle
+  float blindDuration = 3000; // ms, To Do: determine the duration
+  float angle = getYaw(); // this angle is the "straight", recorded at each start after turning 90 deg 
   
   moveForward();
   while (getFrontDist() > minFrontDist) {
     if (getLeftDist() < leftDist - distMargin) {
-      turnToAngle((angle+15) % 360); // assumption, right turn increases yaw
+      turnToAngle((int(angle)+15) % 360); // assumption, right turn increases yaw
       moveForward();
       delay(blindDuration);
       stopMotors();
       turnToAngle(angle);
       moveForward();
     } else if (getLeftDist() > leftDist + distMargin) {
-      turnToAngle((angle-15) % 360); // assumption, right turn increases yaw
+      turnToAngle((int(angle)-15) % 360); // assumption, right turn increases yaw
       moveForward();
       delay(blindDuration);
       stopMotors();
@@ -175,48 +229,42 @@ void moveForwardUntil(float minFrontDist, float leftDist) { // case 2: moving st
   }
   stopMotors();  
 }
-
-void turnRight90() {
-  int angle = getYaw(); // this angle is the "straight", recorded at the start
-  turnToAngle((angle + 90) % 360);
-}
-
+  
 // testing functions
 
 // test 1 Average speed test
 void speedTest(int stoppingDistance){
-   if (getFrontDist()> stoppingDistance){
-    moveForward();
-    }
-    else {
-      stopMotors();
-      }
-  }
+  moveForward();
+  while(getFrontDist() > stoppingDistance){}
+  stopMotors();
+}
 
 // test 2 Turn test
 void turnTest(int turnAngle){
   delay(100);
   turnToAngle(turnAngle);
   delay(100);
-  }
+}
 
 // test 3 Detection and Reaction test
 void detectAndReactTest(int reactionDistance, int test3Time){
-   if (getFrontDist()<= reactionDistance){
-    Serial.println("Front Detected Turning");
-    turnRight();
-    delay(test3Time);
-    }
-    else if (getLeftDist()<= reactionDistance) {
-      Serial.println("Left Detected Turning");
+  while (1) {
+    if (getFrontDist() <= reactionDistance){
+      Serial.println("Front Detected Turning");
+      turnRight();
       delay(test3Time);
-      }
-      else {
-        stopMotors();
-        }
+      break;
+     }
+     else if (getLeftDist() <= reactionDistance) {
+       Serial.println("Left Detected Turning");
+       delay(test3Time);
+       break;
+     }
   }
+  stopMotors();
+}
 
-  // function to convert distance count to approximate tile count with a margin of error
+// function to convert distance count to approximate tile count with a margin of error
 
 // possible helper function to convert distances to tile numbers if needed
 //int convertDistToTile(){
@@ -226,95 +274,6 @@ void detectAndReactTest(int reactionDistance, int test3Time){
 
 // test version of path traversal algorithm
 
-void testSpiralPath(){
-  // 1 tile is about 30 cm long
-  // width of chassis is 130 mm => half  = 65 mm
-  // assume robot is placed about centre of tile
-  // hence rough distance from wall is about 150 - 65 = 85 mm
-  // hence use about 9 cm as 0 title distance for left
-
-  // getFrontDist()
-
-  // initialize algorithm variables
-
-  int turnCount = 0;
-  int rotation = 1;
-  
-  // turn condition variables
-  int forwardCondition = 9;
-  int leftCondition = 9;
-  delay(100);
-  // get forward distance
-  int frontDist = getFrontDist();
-  int leftDist = getLeftDist();
- 
-  while(turnCount < 10){
-
-    // check distances
-    
-    frontDist = getFrontDist();
-    leftDist = getLeftDist();
-    
-    // first 3 turn are against the wall hence left distance not needed
-    while (turnCount < 3){
-
-      // check distances
-       frontDist = getFrontDist();
-       leftDist = getLeftDist();
-
-      // move forward until min forward distance 
-      moveForwardUntil(forwardCondition);
-      Serial.println("Stopped, turn count: ");
-      Serial.println(turnCount);
-
-      // should be stopped here so update variables
-      turnCount++;
-      rotation = ceil(turnCount/4);
-
-      // turn 
-      turnRight90();  
-      }
-
-      // check if need to update turning condition
-
-      if (turnCount < 4*rotation - 1){
-        // Do nothing no need to update anything
-        }
-      else if (turnCount == 4*rotation - 1){
-        // update Front condition by one tile
-        forwardCondition += 30;
-        } 
-       else {
-        // turns > 4*rotation - 1 case hence update left condition by 1 title
-        leftCondition += 30;
-        }
-
-       // check distances
-       frontDist = getFrontDist();
-       leftDist = getLeftDist();
-
-      // move forward until min forward distance 
-      moveForwardUntil(forwardCondition, leftCondition);
-      Serial.println("Stopped, turn count: ");
-      Serial.println(turnCount);
-
-      // should be stopped here so update variables
-      turnCount++;
-      rotation = ceil(turnCount/4);
-
-      // turn 
-      turnRight90();  
-    }
-
-    // after 10th turn we are right infront of final tile
-    // hence move up slowly and then idle doing nothing
-    moveForwardUntil(69); // about 2 tiles and 9 cm
-    // still need to decide how long it takes to move up 1 tile
-    //delay(50);
-    stopMotors();
-    // idle we are done with the course:
-    while(true){};
-  }
 
 void setup() {
   // put your setup code here, to run once:
@@ -325,7 +284,10 @@ void setup() {
     Serial.println("IMU Found!");
   }
   else {
-    Serial.println("IMU not found.");
+     // IMU not found, infinitely looping to indicate that something is wrong
+    while(1){
+      Serial.println("IMU not found.");
+      }
   }
 
   imu.setAccelRange(ICM20948_ACCEL_RANGE_8_G); // 8 G force
@@ -360,10 +322,57 @@ void loop() {
 
   detectAndReactTest(5, 1000); // detect hand/object at least 5 cm away and wait at least 1 s between detections
 
-  // path algorithm
+  // path algorithm 
+  // no for loop used for easier debugging separtely one by one later 
+
+  float FRONT_MARGIN = 2; // min dist to edge before turning
+  float SIDE_MARGIN = 2;
+  float BLOCK_WIDTH = 30;
+
+  // first loop
+  moveForwardUntil(FRONT_MARGIN, SIDE_MARGIN);
+  turnRight90();
+  
+  moveForwardUntil(FRONT_MARGIN, SIDE_MARGIN);
+  turnRight90();
+
+  moveForwardUntil(FRONT_MARGIN, SIDE_MARGIN);
+  turnRight90();
+
+  moveForwardUntil(FRONT_MARGIN + BLOCK_WIDTH * 1, SIDE_MARGIN);
+  turnRight90();
+  
+  // second loop
+  moveForwardUntil(FRONT_MARGIN + BLOCK_WIDTH * 1,
+                   SIDE_MARGIN + BLOCK_WIDTH * 1);
+  turnRight90();
+
+  moveForwardUntil(FRONT_MARGIN + BLOCK_WIDTH * 1,
+                   SIDE_MARGIN + BLOCK_WIDTH * 1);
+  turnRight90();
+
+  moveForwardUntil(FRONT_MARGIN + BLOCK_WIDTH * 1,
+                   SIDE_MARGIN + BLOCK_WIDTH * 1);
+  turnRight90();
+
+  moveForwardUntil(FRONT_MARGIN + BLOCK_WIDTH * 2,
+                   SIDE_MARGIN + BLOCK_WIDTH * 1);
+  turnRight90();
+
+  // third loop
+  moveForwardUntil(FRONT_MARGIN + BLOCK_WIDTH * 2,
+                   SIDE_MARGIN + BLOCK_WIDTH * 2);
+  turnRight90();
+
+  moveForwardUntil(FRONT_MARGIN + BLOCK_WIDTH * 2,
+                   SIDE_MARGIN + BLOCK_WIDTH * 2);
+  turnRight90();
+
+  moveForwardUntil(FRONT_MARGIN + BLOCK_WIDTH * 2,
+                   SIDE_MARGIN + BLOCK_WIDTH * 2);
+
 
   // testSpiralPath();
-
   
 
 }
