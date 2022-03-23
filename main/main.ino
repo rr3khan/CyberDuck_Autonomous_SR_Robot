@@ -1,7 +1,7 @@
 // Obstacle Course Robot code
 
 // Required Libraries
-#include <AFMotor.h> // Library for Adafruit motor shield  
+#include <Adafruit_MotorShield.h> // Library for Adafruit motor shield  
 #include <NewPing.h> // Library for the Ultrasonic sensor
 #include <Adafruit_ICM20X.h> // Libraries for the IMU
 #include <Adafruit_ICM20948.h> // Libraries for the IMU
@@ -25,13 +25,17 @@ NewPing sonarF(TRIGGER_PIN_F, ECHO_PIN_F, MAX_DISTANCE);
 NewPing sonarL(TRIGGER_PIN_L, ECHO_PIN_L, MAX_DISTANCE);
 // NewPing sonarR(TRIGGER_PIN_R, ECHO_PIN_R, MAX_DISTANCE); // maybe not used ?!
 
+// Create the motor shield object with the default I2C address
+Adafruit_MotorShield AFMS = Adafruit_MotorShield();
+
 
 // Motors
 // initialize motors
-AF_DCMotor motorBR(1, MOTOR12_1KHZ); // To Do: determine what PWM frequencies to use for motors
-AF_DCMotor motorFR(2, MOTOR12_1KHZ); // To Do: determine what PWM frequencies to use for motors
-AF_DCMotor motorFL(3, MOTOR34_1KHZ); // To Do: determine what PWM frequencies to use for motors
-AF_DCMotor motorBL(4, MOTOR34_1KHZ); // To Do: determine what PWM frequencies to use for motors
+// Select which 'port' M1, M2, M3 or M4.
+Adafruit_DCMotor *motorBR = AFMS.getMotor(1);
+Adafruit_DCMotor *motorFR = AFMS.getMotor(2);
+Adafruit_DCMotor *motorFL = AFMS.getMotor(3);
+Adafruit_DCMotor *motorBL = AFMS.getMotor(4);
 
 // set initial speed to this
 int MOTOR_SPEED_FORWARD = 125; // 255 is max, To Do: determine the speed
@@ -46,60 +50,60 @@ Adafruit_ICM20948 imu;
 // Helper functions
 
 void stopMotors() {
-  motorBR.run(RELEASE);
-  motorFR.run(RELEASE);
-  motorBL.run(RELEASE);
-  motorFL.run(RELEASE); 
+  motorBR->run(RELEASE);
+  motorFR->run(RELEASE);
+  motorBL->run(RELEASE);
+  motorFL->run(RELEASE); 
 }
 
 void turnRight() {
   // set motor speed
-  motorBR.setSpeed(MOTOR_SPEED_TURNING);
-  motorFR.setSpeed(MOTOR_SPEED_TURNING);
-  motorBL.setSpeed(MOTOR_SPEED_TURNING);
-  motorFL.setSpeed(MOTOR_SPEED_TURNING);
+  motorBR->setSpeed(MOTOR_SPEED_TURNING);
+  motorFR->setSpeed(MOTOR_SPEED_TURNING);
+  motorBL->setSpeed(MOTOR_SPEED_TURNING);
+  motorFL->setSpeed(MOTOR_SPEED_TURNING);
 
   // turning right
-  motorBR.run(BACKWARD);
-  motorFR.run(BACKWARD);
-  motorBL.run(FORWARD);
-  motorFL.run(FORWARD);
+  motorBR->run(BACKWARD);
+  motorFR->run(BACKWARD);
+  motorBL->run(FORWARD);
+  motorFL->run(FORWARD);
 }
 
 void turnLeft() {
   // set motor speed
-  motorBR.setSpeed(MOTOR_SPEED_TURNING);
-  motorFR.setSpeed(MOTOR_SPEED_TURNING);
-  motorBL.setSpeed(MOTOR_SPEED_TURNING);
-  motorFL.setSpeed(MOTOR_SPEED_TURNING);
+  motorBR->setSpeed(MOTOR_SPEED_TURNING);
+  motorFR->setSpeed(MOTOR_SPEED_TURNING);
+  motorBL->setSpeed(MOTOR_SPEED_TURNING);
+  motorFL->setSpeed(MOTOR_SPEED_TURNING);
 
   // turning left
-  motorBR.run(FORWARD);
-  motorFR.run(FORWARD);
-  motorBL.run(BACKWARD);
-  motorFL.run(BACKWARD);
+  motorBR->run(FORWARD);
+  motorFR->run(FORWARD);
+  motorBL->run(BACKWARD);
+  motorFL->run(BACKWARD);
 }
 
 void moveForward() {
 // set motor speed
-//  motorBR.setSpeed(MOTOR_SPEED_FORWARD);
-//  motorFR.setSpeed(MOTOR_SPEED_FORWARD);
-//  motorBL.setSpeed(MOTOR_SPEED_FORWARD);
-//  motorFL.setSpeed(MOTOR_SPEED_FORWARD);
+//  motorBR->setSpeed(MOTOR_SPEED_FORWARD);
+//  motorFR->setSpeed(MOTOR_SPEED_FORWARD);
+//  motorBL->setSpeed(MOTOR_SPEED_FORWARD);
+//  motorFL->setSpeed(MOTOR_SPEED_FORWARD);
 
   // moving forward
-  motorBR.run(FORWARD);
-  motorFR.run(FORWARD);
-  motorBL.run(FORWARD);
-  motorFL.run(FORWARD);
+  motorBR->run(FORWARD);
+  motorFR->run(FORWARD);
+  motorBL->run(FORWARD);
+  motorFL->run(FORWARD);
 
   for (int speedSet = 0; speedSet < MOTOR_SPEED_FORWARD; speedSet +=2) // slowly bring the speed up 
                                                           // to reduce stress on motors and battery
   {
-   motorBR.setSpeed(speedSet);
-   motorFR.setSpeed(speedSet);
-   motorBL.setSpeed(speedSet);
-   motorFL.setSpeed(speedSet);
+   motorBR->setSpeed(speedSet);
+   motorFR->setSpeed(speedSet);
+   motorBL->setSpeed(speedSet);
+   motorFL->setSpeed(speedSet);
    delay(5);
   }
 }
@@ -279,6 +283,14 @@ void setup() {
   // put your setup code here, to run once:
   Serial.begin(115200); // opens serial port and sets data rate to 115200 bps
 
+  // check motor shield
+    if (!AFMS.begin()) {         // create with the default frequency 1.6KHz
+  // if (!AFMS.begin(1000)) {  // OR with a different frequency, say 1KHz
+    Serial.println("Could not find Motor Shield. Check wiring.");
+    while (1);
+  }
+  Serial.println("Motor Shield found.");
+
   // setup IMU
   if (imu.begin_I2C()) {
     Serial.println("IMU Found!");
@@ -300,18 +312,18 @@ void loop() {
 
   // testing turn each motors slowly for 5 s
 
-  motorBR.setSpeed(MOTOR_SPEED_TURNING);
-  motorFR.setSpeed(MOTOR_SPEED_TURNING);
-  motorBL.setSpeed(MOTOR_SPEED_TURNING);
-  motorFL.setSpeed(MOTOR_SPEED_TURNING);
+  motorBR->setSpeed(MOTOR_SPEED_TURNING);
+  motorFR->setSpeed(MOTOR_SPEED_TURNING);
+  motorBL->setSpeed(MOTOR_SPEED_TURNING);
+  motorFL->setSpeed(MOTOR_SPEED_TURNING);
 
-  motorBR.run(FORWARD);
+  motorBR->run(FORWARD);
   delay(5000);
-  motorFR.run(FORWARD);
+  motorFR->run(FORWARD);
   delay(5000);
-  motorBL.run(FORWARD);
+  motorBL->run(FORWARD);
   delay(5000);
-  motorFL.run(FORWARD);
+  motorFL->run(FORWARD);
   delay(5000);
 
   // March 25th design check testing
