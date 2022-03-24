@@ -10,12 +10,12 @@
 
 // UltraSonic Sensors
 // Setup Pins for UltraSonic Sensors
-#define TRIGGER_PIN_F A0 // To Do: determine which pins these are on the board
-#define ECHO_PIN_F    A1 // To Do: determine which pins these are on the board
-#define TRIGGER_PIN_L A2 // To Do: determine which pins these are on the board
-#define ECHO_PIN_L    A3 // To Do: determine which pins these are on the board
-#define TRIGGER_PIN_R A4 // To Do: determine which pins these are on the board
-#define ECHO_PIN_R    A5 // To Do: determine which pins these are on the board
+#define TRIGGER_PIN_F A3 // To Do: determine which pins these are on the board
+#define ECHO_PIN_F    A2 // To Do: determine which pins these are on the board
+#define TRIGGER_PIN_L A0 // To Do: determine which pins these are on the board
+#define ECHO_PIN_L    A1 // To Do: determine which pins these are on the board
+//#define TRIGGER_PIN_R A4 // To Do: determine which pins these are on the board
+//#define ECHO_PIN_R    A5 // To Do: determine which pins these are on the board
 
 // Maximum distance we want to ping for (in centimeters)
 #define MAX_DISTANCE 300 // To Do determine the max distance we need to work with
@@ -32,10 +32,10 @@ Adafruit_MotorShield AFMS = Adafruit_MotorShield();
 // Motors
 // initialize motors
 // Select which 'port' M1, M2, M3 or M4.
-Adafruit_DCMotor *motorBR = AFMS.getMotor(1);
-Adafruit_DCMotor *motorFR = AFMS.getMotor(2);
-Adafruit_DCMotor *motorFL = AFMS.getMotor(3);
-Adafruit_DCMotor *motorBL = AFMS.getMotor(4);
+Adafruit_DCMotor *motorBR = AFMS.getMotor(3);
+Adafruit_DCMotor *motorFR = AFMS.getMotor(4);
+Adafruit_DCMotor *motorFL = AFMS.getMotor(1);
+Adafruit_DCMotor *motorBL = AFMS.getMotor(2);
 
 // set initial speed to this
 int MOTOR_SPEED_FORWARD = 125; // 255 is max, To Do: determine the speed
@@ -86,10 +86,10 @@ void turnLeft() {
 
 void moveForward() {
 // set motor speed
-//  motorBR->setSpeed(MOTOR_SPEED_FORWARD);
-//  motorFR->setSpeed(MOTOR_SPEED_FORWARD);
-//  motorBL->setSpeed(MOTOR_SPEED_FORWARD);
-//  motorFL->setSpeed(MOTOR_SPEED_FORWARD);
+  motorBR->setSpeed(MOTOR_SPEED_FORWARD);
+  motorFR->setSpeed(MOTOR_SPEED_FORWARD);
+  motorBL->setSpeed(MOTOR_SPEED_FORWARD);
+  motorFL->setSpeed(MOTOR_SPEED_FORWARD);
 
   // moving forward
   motorBR->run(FORWARD);
@@ -97,15 +97,15 @@ void moveForward() {
   motorBL->run(FORWARD);
   motorFL->run(FORWARD);
 
-  for (int speedSet = 0; speedSet < MOTOR_SPEED_FORWARD; speedSet +=2) // slowly bring the speed up 
-                                                          // to reduce stress on motors and battery
-  {
-   motorBR->setSpeed(speedSet);
-   motorFR->setSpeed(speedSet);
-   motorBL->setSpeed(speedSet);
-   motorFL->setSpeed(speedSet);
-   delay(5);
-  }
+//  for (int speedSet = 0; speedSet < MOTOR_SPEED_FORWARD; speedSet +=2) // slowly bring the speed up 
+//                                                          // to reduce stress on motors and battery
+//  {
+//   motorBR->setSpeed(speedSet);
+//   motorFR->setSpeed(speedSet);
+//   motorBL->setSpeed(speedSet);
+//   motorFL->setSpeed(speedSet);
+//   delay(5);
+//  }
 }
 
 float getYaw(){ 
@@ -302,29 +302,34 @@ void setup() {
       }
   }
 
-  imu.setAccelRange(ICM20948_ACCEL_RANGE_8_G); // 8 G force
-  imu.setGyroRange(ICM20948_GYRO_RANGE_1000_DPS); // 1000 degrees/s
+  imu.setAccelRange(ICM20948_ACCEL_RANGE_4_G); // 4 G force
+  imu.setGyroRange(ICM20948_GYRO_RANGE_500_DPS); // 1000 degrees/s
   
 }
+
+void blindTurn(int turnTime){
+  turnRight();
+  delay(turnTime);
+  }
 
 void loop() {
   // put your main code here, to run repeatedly:
 
   // testing turn each motors slowly for 5 s
 
-  motorBR->setSpeed(MOTOR_SPEED_TURNING);
-  motorFR->setSpeed(MOTOR_SPEED_TURNING);
-  motorBL->setSpeed(MOTOR_SPEED_TURNING);
-  motorFL->setSpeed(MOTOR_SPEED_TURNING);
+//  motorBR->setSpeed(MOTOR_SPEED_TURNING);
+//  motorFR->setSpeed(MOTOR_SPEED_TURNING);
+//  motorBL->setSpeed(MOTOR_SPEED_TURNING);
+//  motorFL->setSpeed(MOTOR_SPEED_TURNING);
 
-  motorBR->run(FORWARD);
-  delay(5000);
-  motorFR->run(FORWARD);
-  delay(5000);
-  motorBL->run(FORWARD);
-  delay(5000);
-  motorFL->run(FORWARD);
-  delay(5000);
+//  motorBR->run(FORWARD);
+//  delay(5000);
+//  motorFR->run(FORWARD);
+//  delay(5000);
+//  motorBL->run(FORWARD);
+//  delay(5000);
+//  motorFL->run(FORWARD);
+//  delay(5000);
 
   // March 25th design check testing
   
@@ -342,46 +347,46 @@ void loop() {
   float BLOCK_WIDTH = 30;
 
   // first loop
-  moveForwardUntil(FRONT_MARGIN, SIDE_MARGIN);
-  turnRight90();
-  
-  moveForwardUntil(FRONT_MARGIN, SIDE_MARGIN);
-  turnRight90();
-
-  moveForwardUntil(FRONT_MARGIN, SIDE_MARGIN);
-  turnRight90();
-
-  moveForwardUntil(FRONT_MARGIN + BLOCK_WIDTH * 1, SIDE_MARGIN);
-  turnRight90();
-  
-  // second loop
-  moveForwardUntil(FRONT_MARGIN + BLOCK_WIDTH * 1,
-                   SIDE_MARGIN + BLOCK_WIDTH * 1);
-  turnRight90();
-
-  moveForwardUntil(FRONT_MARGIN + BLOCK_WIDTH * 1,
-                   SIDE_MARGIN + BLOCK_WIDTH * 1);
-  turnRight90();
-
-  moveForwardUntil(FRONT_MARGIN + BLOCK_WIDTH * 1,
-                   SIDE_MARGIN + BLOCK_WIDTH * 1);
-  turnRight90();
-
-  moveForwardUntil(FRONT_MARGIN + BLOCK_WIDTH * 2,
-                   SIDE_MARGIN + BLOCK_WIDTH * 1);
-  turnRight90();
-
-  // third loop
-  moveForwardUntil(FRONT_MARGIN + BLOCK_WIDTH * 2,
-                   SIDE_MARGIN + BLOCK_WIDTH * 2);
-  turnRight90();
-
-  moveForwardUntil(FRONT_MARGIN + BLOCK_WIDTH * 2,
-                   SIDE_MARGIN + BLOCK_WIDTH * 2);
-  turnRight90();
-
-  moveForwardUntil(FRONT_MARGIN + BLOCK_WIDTH * 2,
-                   SIDE_MARGIN + BLOCK_WIDTH * 2);
+//  moveForwardUntil(FRONT_MARGIN, SIDE_MARGIN);
+//  turnRight90();
+//  
+//  moveForwardUntil(FRONT_MARGIN, SIDE_MARGIN);
+//  turnRight90();
+//
+//  moveForwardUntil(FRONT_MARGIN, SIDE_MARGIN);
+//  turnRight90();
+//
+//  moveForwardUntil(FRONT_MARGIN + BLOCK_WIDTH * 1, SIDE_MARGIN);
+//  turnRight90();
+//  
+//  // second loop
+//  moveForwardUntil(FRONT_MARGIN + BLOCK_WIDTH * 1,
+//                   SIDE_MARGIN + BLOCK_WIDTH * 1);
+//  turnRight90();
+//
+//  moveForwardUntil(FRONT_MARGIN + BLOCK_WIDTH * 1,
+//                   SIDE_MARGIN + BLOCK_WIDTH * 1);
+//  turnRight90();
+//
+//  moveForwardUntil(FRONT_MARGIN + BLOCK_WIDTH * 1,
+//                   SIDE_MARGIN + BLOCK_WIDTH * 1);
+//  turnRight90();
+//
+//  moveForwardUntil(FRONT_MARGIN + BLOCK_WIDTH * 2,
+//                   SIDE_MARGIN + BLOCK_WIDTH * 1);
+//  turnRight90();
+//
+//  // third loop
+//  moveForwardUntil(FRONT_MARGIN + BLOCK_WIDTH * 2,
+//                   SIDE_MARGIN + BLOCK_WIDTH * 2);
+//  turnRight90();
+//
+//  moveForwardUntil(FRONT_MARGIN + BLOCK_WIDTH * 2,
+//                   SIDE_MARGIN + BLOCK_WIDTH * 2);
+//  turnRight90();
+//
+//  moveForwardUntil(FRONT_MARGIN + BLOCK_WIDTH * 2,
+//                   SIDE_MARGIN + BLOCK_WIDTH * 2);
 
 
   // testSpiralPath();
