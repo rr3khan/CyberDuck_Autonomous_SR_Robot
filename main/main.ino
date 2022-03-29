@@ -18,7 +18,7 @@
 //#define ECHO_PIN_R    A5 // To Do: determine which pins these are on the board
 
 // Maximum distance we want to ping for (in centimeters)
-#define MAX_DISTANCE 300 // To Do determine the max distance we need to work with
+#define MAX_DISTANCE 200 // To Do determine the max distance we need to work with
 
 // Setup each of the UltraSonic sensors
 NewPing sonarF(TRIGGER_PIN_F, ECHO_PIN_F, MAX_DISTANCE);
@@ -147,6 +147,9 @@ float getFrontDist() { // in cm
   for (int j=0; j<10; ++j) {
       total += front_dist_arr[j];
   }
+  Serial.print("Ping Front: ");
+  Serial.print(total/10); // Send ping, get distance in cm and print result (0 = outside set distance range)
+  Serial.println("cm");
   return  total / 10;
 }
 
@@ -161,6 +164,9 @@ float getLeftDist() { // in cm
   for (int j=0; j<10; ++j) {
       total += left_dist_arr[j];
   }
+  Serial.print("Ping Left: ");
+  Serial.print(total/10); // Send ping, get distance in cm and print result (0 = outside set distance range)
+  Serial.println("cm");
   return  total / 10;
 }
 
@@ -252,17 +258,18 @@ void turnTest(int turnAngle){
 
 // test 3 Detection and Reaction test
 void detectAndReactTest(int reactionDistance, int test3Time){
-  while (1) {
-    if (getFrontDist() <= reactionDistance){
+  int frontDist = getFrontDist();
+  int leftDist = getLeftDist();
+
+    if (frontDist <= reactionDistance){
       Serial.println("Front Detected Turning");
       turnRight();
       delay(test3Time);
-      break;
      }
      else if (getLeftDist() <= reactionDistance) {
        Serial.println("Left Detected Turning");
+       turnRight();
        delay(test3Time);
-       break;
      }
   }
   stopMotors();
@@ -342,8 +349,8 @@ void loop() {
   // path algorithm 
   // no for loop used for easier debugging separtely one by one later 
 
-  float FRONT_MARGIN = 2; // min dist to edge before turning
-  float SIDE_MARGIN = 2;
+  float FRONT_MARGIN = 5; // min dist to edge before turning
+  float SIDE_MARGIN = 5;
   float BLOCK_WIDTH = 30;
 
   // first loop
@@ -388,6 +395,50 @@ void loop() {
 //  moveForwardUntil(FRONT_MARGIN + BLOCK_WIDTH * 2,
 //                   SIDE_MARGIN + BLOCK_WIDTH * 2);
 
+// may be better to implement the above as a series of switch statements
+// that way we don't have to restart from the beginning if something goes wrong with one
+
+// get initial states
+
+int front = 0;
+int left = 0;
+
+front = getFrontDist();
+left = getFrontDist();
+
+float distanceArray[2] {front, left};
+
+// need to add function to determine state
+// switch state machine incomplete
+//switch(state){
+//  case loop1;
+//      moveForwardUntil(FRONT_MARGIN, SIDE_MARGIN);
+//      turnRight90();
+//    break;
+//  case loop1end;
+//      moveForwardUntil(FRONT_MARGIN + BLOCK_WIDTH * 2,
+//      SIDE_MARGIN + BLOCK_WIDTH * 1);
+//    turnRight90();
+//    break;
+//  case loop2;
+//    moveForwardUntil(FRONT_MARGIN + BLOCK_WIDTH * 1,
+//    SIDE_MARGIN + BLOCK_WIDTH * 1);
+//    turnRight90();
+//    break;
+//  case loop2end;
+//    moveForwardUntil(FRONT_MARGIN + BLOCK_WIDTH * 2,
+//    SIDE_MARGIN + BLOCK_WIDTH * 1);
+//    break;
+//  case loop3;
+//    moveForwardUntil(FRONT_MARGIN + BLOCK_WIDTH * 2,
+//    SIDE_MARGIN + BLOCK_WIDTH * 2);
+//    turnRight90();
+//    break;
+//  case loop3end;
+//    moveForwardUntil(FRONT_MARGIN + BLOCK_WIDTH * 2,
+//    SIDE_MARGIN + BLOCK_WIDTH * 2);
+//    break;
+//  }
 
   // testSpiralPath();
   
